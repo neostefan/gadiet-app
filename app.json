@@ -1,14 +1,15 @@
 {
   "expo": {
-    "name": "diet-project",
-    "slug": "diet-project",
+    "name": "gadiet",
+    "description": "diet planning mobile application using genetic algorithm",
+    "slug": "gadiet",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    // "splash": {
-    //   "resizeMode": "contain",
-    //   "backgroundColor": "#ffffff"
-    // },
+    "splash": {
+      "image": "./assets/3708815.jpg",
+      "backgroundColor": "#F9F6EE"
+    },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -20,11 +21,11 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/plate.png"
+        "foregroundImage": "./assets/3708815.jpg"
       }
     },
     "web": {
-      "favicon": "./assets/plate.png"
+      "favicon": "./assets/3708815.jpg"
     }
   }
 }
