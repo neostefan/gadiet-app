@@ -1,15 +1,22 @@
-import { signInCredentials, registrationCredentials, userPreferences, dietListing } from '../util'
+import { signInCredentials, registrationCredentials, userPreferences, dietListing, User } from '../util'
 
 interface authResponse {
-    message: boolean;
+    message: any;
     status: number;
-    metaData?: string;
+    token?: string;
 }
 
 interface plannerResponse {
     meal: dietListing;
-    status: number;
-    metaData?: string;
+}
+
+interface dashboardResponse {
+    meals: dietListing[];
+    user: User
+}
+
+interface failedPlannerResponse {
+    message: string;
 }
 
 function isValidauthResponse(value: unknown): value is authResponse {
@@ -20,12 +27,8 @@ function isValidError(value: unknown): value is Error {
     return !!value && typeof value == 'object'&& 'message' in value && typeof (value as Error).message == 'string'
 }
 
-function isValidPlannerResponse(value: unknown): value is plannerResponse {
-    return !!value && typeof value == 'object' && 'meal' in value && typeof (value as plannerResponse).meal == 'object' 
-}
-
 class Client {
-    private basePath: string = "http://192.168.145.118:5000/api";
+    private basePath: string = "http://213.168.250.5:5000/api";
 
     async SignIn(route: string, data: signInCredentials): Promise<authResponse> {
         var status: number
@@ -34,37 +37,34 @@ class Client {
             let response = await fetch(this.basePath + route, {
                 method: 'POST',
                 body: JSON.stringify(data),
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json'
+                }
             });
 
-            let resData = await response.json()
+            let resData: authResponse = await response.json()
             status = response.status
 
             if(status == 200 && isValidauthResponse(resData)) {
                 return {
                     message: true,
-                    status: status
+                    status: status,
+                    token: resData.token
                 }
             } else if(status != 200) {
                 return {
-                    message: false,
+                    message: resData.message,
                     status: status,
-                    metaData: resData.message
+                    token: resData.token
                 }
             }
 
         } catch(error) {
             if(isValidError(error)) {
-                return {
-                    message: false,
-                    status: status,
-                    metaData: error.message
-                }
+                throw Error(error.message)
+
             } else {
-                return {
-                    message: false,
-                    status: status
-                }
+                throw Error("unable to login: " + error)
             }
         }
     }
@@ -83,7 +83,6 @@ class Client {
     
             let resData = await res.json()
             status = res.status
-            console.log(resData)
 
             if(isValidauthResponse(resData)) {
                 return {
@@ -95,57 +94,64 @@ class Client {
             }
         } catch(error) {
             if(isValidError(error)) {
-                return {
-                    message: false,
-                    status: status,
-                    metaData: error.message
-                }
+                throw Error(error.message)
             } else {
-                return {
-                    message: false,
-                    status: status,
-                    metaData: error.message
-                }
+               throw Error("unable to register, contact admin with message: " + error)
             }
         }
     }
 
-    async GetMeal(route: string, data: userPreferences): Promise<plannerResponse> {
-        var status: number
+    // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MX0.JXUnFSAPT0Y_lyRAz6mOr-1A4K61GzJRh94RXR8VUqU
+    async GetDashBoardInfo(route: string, userToken: string): Promise<dashboardResponse | failedPlannerResponse> {
+        try {
+            let res = await fetch(this.basePath + route, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + userToken
+                }
+            })
 
+            let resData: dashboardResponse | failedPlannerResponse = await res.json()
+
+            if(!res.ok && "message" in resData) {
+                throw Error(resData.message)
+            }
+
+            return resData
+
+        } catch(e) {
+            if(isValidError(e)) {
+                throw Error(`Failed to fetch dashboard info: ${e.message}`)
+            } else {
+                throw Error("Failed to fetch dashboard info")
+            }
+        }
+    }
+
+    async GetMeal(route: string, data: userPreferences, userToken: string): Promise<plannerResponse | failedPlannerResponse> {
         try {
             let res = await fetch(this.basePath + route, {
                 method: 'POST',
                 body: JSON.stringify(data),
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + userToken,
+                }
             });
 
-            let resData = await res.json()
-            status = res.status
+            let resData: plannerResponse | failedPlannerResponse = await res.json()
 
-            console.log(resData.message)
-
-            if(isValidPlannerResponse(resData)) {
-                return {
-                    meal: resData.meal,
-                    status: status
-                }
-            } else {
-                throw Error('unable to parse meal response')
+            if(!res.ok && "message" in resData) {
+                throw Error(resData.message)
             }
+
+            return resData
 
         } catch(error) {
             if(isValidError(error)) {
-                return {
-                    meal: {},
-                    status: status,
-                    metaData: error.message
-                }
+               throw Error(`Failed to fetch meal: ${error.message}`)
             } else {
-                return {
-                    meal: {},
-                    status: status,
-                }
+                throw Error('Failed to fetch meal')
             }
         }
     }

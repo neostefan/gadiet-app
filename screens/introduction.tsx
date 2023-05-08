@@ -1,13 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons"
+import { NavigationProp } from "@react-navigation/native";
+import { MaterialIcons } from "@expo/vector-icons"
 import DietImg from "../assets/svg/diet.svg";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { colors, paramList } from "../util"
+import { colors, stackParamList } from "../util"
 
-type IntroductionProps = NativeStackScreenProps<paramList, 'Introduction'>
+type Props = {
+   navigation: NavigationProp<stackParamList, 'Introduction'> 
+}
 
-export default function Introduction({ navigation }: IntroductionProps) {
+const Introduction: React.FC<Props> = function Introduction({ navigation }) {
     return (
         <View style={styles.section}>
             <View style={styles.hero}>
@@ -16,7 +18,7 @@ export default function Introduction({ navigation }: IntroductionProps) {
                     Ready to Optimize Your Diet Plans
                 </Text>
             </View>
-            <TouchableOpacity style={styles.action} onPress={() => navigation.navigate('Register')}>
+            <TouchableOpacity style={styles.action} onPress={() => navigation.navigate('LogIn')}>
                 <Text style={styles.actionText}>
                     Get Started
                 </Text>
@@ -65,3 +67,5 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     }
 })
+
+export default Introduction
